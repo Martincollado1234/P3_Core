@@ -1,122 +1,81 @@
 
 
-const {log, biglog, errorlog, colorize} = require("./out");
+const model=require('./model');
 
-const model = require('./model');
+const {log ,biglog,errorlog,colorize}=require('./out');
 
 
-/**
- * Muestra la ayuda.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
-exports.helpCmd = rl => {
-    log("Commandos:");
-    log("  h|help - Muestra esta ayuda.");
-    log("  list - Listar los quizzes existentes.");
-    log("  show <id> - Muestra la pregunta y la respuesta el quiz indicado.");
-    log("  add - Añadir un nuevo quiz interactivamente.");
-    log("  delete <id> - Borrar el quiz indicado.");
-    log("  edit <id> - Editar el quiz indicado.");
-    log("  test <id> - Probar el quiz indicado.");
-    log("  p|play - Jugar a preguntar aleatoriamente todos los quizzes.");
-    log("  credits - Créditos.");
-    log("  q|quit - Salir del programa.");
+
+exports.helpCmd=rl=>{
+    log("Comandos:");
+    log("h|help - Muestra esta ayuda.");
+    log("list - Listar los quizzes existentes.");
+    log("show <id> - Muestra la pregunta y la respuesta del quiz indicado.");
+    log("add - Añadir un nuevo quiz interactivamente." );
+    log("delete<id> - Borrar el quiz indicado.");
+    log("edit <id> - Editar el quiz indicado.");
+    log("test <id> - Probar el quiz indicado.");
+    log("p|play - Jugar a preguntar aleatoriamente todos los quizzes.");
+    log("credits - Créditos.");
+    log("q|quit - Salir del programa.");
     rl.prompt();
 };
 
 
-/**
- * Lista todos los quizzes existentes en el modelo.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
-exports.listCmd = rl => {
-    model.getAll().forEach((quiz, id) => {
-        log(` [${colorize(id, 'magenta')}]:  ${quiz.question}`);
-    });
-    rl.prompt();
+
+exports.quitCmd=rl=>{
+    rl.close();
 };
 
 
-/**
- * Muestra el quiz indicado en el parámetro: la pregunta y la respuesta.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a mostrar.
- */
-exports.showCmd = (rl, id) => {
-    if (typeof id === "undefined") {
-        errorlog(`Falta el parámetro id.`);
-    } else {
-        try {
-            const quiz = model.getByIndex(id);
-            log(` [${colorize(id, 'magenta')}]:  ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);
-        } catch(error) {
-            errorlog(error.message);
-        }
-    }
-    rl.prompt();
-};
+exports.addCmd=rl=>{
+    //log('Añadir un nuevo quiz','red');
+    rl.question(colorize('Introduzca una pregunta: ', 'red'),question =>{
 
+        rl.question(colorize('Introduzca la respuesta ', 'red'),answer =>{
 
-/**
- * Añade un nuevo quiz al módelo.
- * Pregunta interactivamente por la pregunta y por la respuesta.
- *
- * Hay que recordar que el funcionamiento de la funcion rl.question es asíncrono.
- * El prompt hay que sacarlo cuando ya se ha terminado la interacción con el usuario,
- * es decir, la llamada a rl.prompt() se debe hacer en la callback de la segunda
- * llamada a rl.question.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
-exports.addCmd = rl => {
+            model.add(question,answer);
+            log(`${colorize('Se ha añadido','magenta')}: ${question} ${colorize('=>','magenta')} ${answer}`);
 
-    rl.question(colorize(' Introduzca una pregunta: ', 'red'), question => {
-
-        rl.question(colorize(' Introduzca la respuesta ', 'red'), answer => {
-
-            model.add(question, answer);
-            log(` ${colorize('Se ha añadido', 'magenta')}: ${question} ${colorize('=>', 'magenta')} ${answer}`);
             rl.prompt();
         });
     });
+
 };
 
+exports.listCmd=rl=>{
+    //log('Listar todos los quizzes existentes.','red');
+    model.getAll().forEach((quiz,id)=>{
 
-/**
- * Borra un quiz del modelo.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a borrar en el modelo.
- */
-exports.deleteCmd = (rl, id) => {
-    if (typeof id === "undefined") {
-        errorlog(`Falta el parámetro id.`);
-    } else {
-        try {
-            model.deleteByIndex(id);
-        } catch(error) {
-            errorlog(error.message);
-        }
-    }
+        log(`[${colorize(id,'magenta')}]: ${quiz.question}`);
+    });
+
+
+
     rl.prompt();
 };
 
 
-/**
- * Edita un quiz del modelo.
- *
- * Hay que recordar que el funcionamiento de la funcion rl.question es asíncrono.
- * El prompt hay que sacarlo cuando ya se ha terminado la interacción con el usuario,
- * es decir, la llamada a rl.prompt() se debe hacer en la callback de la segunda
- * llamada a rl.question.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a editar en el modelo.
- */
-exports.editCmd = (rl, id) => {
+exports.showCmd=(rl,id)=>{
+    //log('Mostrar el quiz indicado.','red');
+    if (typeof id ==="undefined"){
+        errorlog(`Falta el parámetro id.`);
+    } else {
+        try{
+            const quiz = model.getByIndex(id);
+            log(`[${colorize(id,'magenta')}]: ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}`);
+        } catch(error){
+            errorlog(error.message);
+        }
+
+    }
+
+
+    rl.prompt();
+};
+
+
+exports.testCmd=(rl,id)=> {
     if (typeof id === "undefined") {
         errorlog(`Falta el parámetro id.`);
         rl.prompt();
@@ -124,69 +83,129 @@ exports.editCmd = (rl, id) => {
         try {
             const quiz = model.getByIndex(id);
 
-            process.stdout.isTTY && setTimeout(() => {rl.write(quiz.question)},0);
+            rl.question(colorize(`${quiz.question}`,'red') , resp=>{
+                if (resp.toLowerCase().trim()=== quiz.answer.toLowerCase().trim() ){
+                    log('Su respuesta es correcta');
+                    biglog('CORRECTO', 'green');
 
-            rl.question(colorize(' Introduzca una pregunta: ', 'red'), question => {
+                } else {
+                    log('Su respuesta es incorrecta');
+                    biglog('INCORRECTO', 'red');
+                }rl.prompt();
 
-                process.stdout.isTTY && setTimeout(() => {rl.write(quiz.answer)},0);
-
-                rl.question(colorize(' Introduzca la respuesta ', 'red'), answer => {
-                    model.update(id, question, answer);
-                    log(` Se ha cambiado el quiz ${colorize(id, 'magenta')} por: ${question} ${colorize('=>', 'magenta')} ${answer}`);
-                    rl.prompt();
-                });
             });
+
         } catch (error) {
             errorlog(error.message);
             rl.prompt();
         }
+
     }
 };
+   // log('Probar el quiz indicado.','red');
+    //rl.prompt();
 
 
-/**
- * Prueba un quiz, es decir, hace una pregunta del modelo a la que debemos contestar.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- * @param id Clave del quiz a probar.
- */
-exports.testCmd = (rl, id) => {
-    log('Probar el quiz indicado.', 'red');
+
+
+
+exports.deleteCmd=(rl,id)=>{
+    if (typeof id ==="undefined"){
+        errorlog(`Falta el parámetro id.`);
+    } else {
+        try{
+            model.deleteByIndex(id);
+        } catch(error){
+            errorlog(error.message);
+        }
+
+    }
+
+
     rl.prompt();
 };
 
 
-/**
- * Pregunta todos los quizzes existentes en el modelo en orden aleatorio.
- * Se gana si se contesta a todos satisfactoriamente.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
-exports.playCmd = rl => {
-    log('Jugar.', 'red');
+exports.editCmd=(rl,id)=>{
+    if (typeof id=== "undefined"){
+        errorlog(`Falta el parámetro id.`);
+        rl.prompt();
+    }else {
+        try {
+            const quiz =model.getByIndex(id);
+
+            process.stdout.isTTY && setTimeout(()=>{rl.write(quiz.question)},0);
+            rl.question(colorize('Introduzca una pregunta:','red'),question =>{
+
+                process.stdout.isTTY && setTimeout(()=>{rl.write(quiz.answer)},0);
+                rl.question(colorize('Introduzca la respuesta:','red'),answer=>{
+                    model.update(id,question,answer);
+                    log(`Se ha cambiado el quiz ${colorize(id,'magenta')} por: ${question} ${colorize('=>', 'magenta')} ${colorize(answer,'magenta')}`);
+                    rl.prompt();
+                    });
+            });
+
+        }catch (error){
+            errorlog(error.message);
+            rl.prompt();
+        }
+    }
+
+};
+
+
+exports.playCmd=rl=>{
+    let score = 0;
+
+    let toBeResolved = [];
+
+    let i=0;
+
+    for (i= 0; i<model.getAll().length;i++){
+        toBeResolved[i]=model.getByIndex(i);
+    }
+
+    const playOne = ()=>{
+   
+    if (toBeResolved.length===0) {
+        errorlog('No hay nada más que preguntar');
+                log(`Fin del juego. Aciertos: ${score}`);
+                biglog(score,'magenta');
+                rl.prompt();
+
+    }else {
+        let indice = Math.floor(Math.random()*(toBeResolved.length))
+
+        let quiz= toBeResolved[indice];
+
+        rl.question(colorize(`${quiz.question}`,'red'), resp => {
+            if (resp===quiz.answer){
+             score++;   
+             log(`CORRECTO - Lleva  ${colorize(score,'magenta')} aciertos`);
+            
+             playOne();
+
+            } else{
+            log(`Resultad incorrecto. Totales correctas: ${colorize(score,'magenta')}`);
+log(`Fin del Juego. Aciertos: ${score}` );
+    biglog(score,'magenta');
+                rl.prompt();
+        }
+
+        });rl.prompt();
+    }
+}
+
+playOne();
+
+   // log('Jugar.','red');
+   // rl.prompt();
+};
+
+
+exports.creditsCmd=rl=>{
+    log('Autores de la practica:','red');
+    log('Martin Collado','green');
+    
     rl.prompt();
 };
-
-
-/**
- * Muestra los nombres de los autores de la práctica.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
-exports.creditsCmd = rl => {
-    log('Autores de la práctica:');
-    log('Nombre 1', 'green');
-    log('Nombre 2', 'green');
-    rl.prompt();
-};
-
-
-/**
- * Terminar el programa.
- *
- * @param rl Objeto readline usado para implementar el CLI.
- */
-exports.quitCmd = rl => {
-    rl.close();
-};
-
